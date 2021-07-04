@@ -4,9 +4,9 @@ This is based on the [Flask](https://github.com/pallets/flask) project owned by 
 
 **Anyone can modify and distribute this project.**
 
-#### 이 플라스크 서버는 텔레그램 봇과 연동하여 다양한 기능을 수행합니다.
+#### 이 플라스크 서버는 텔레그램 봇과 연동하여 여러 기능을 수행합니다.
 
-- reservation: 시설예약 수행
+- reservation: iwannayeyak_bot 과 통신하는 서버
 
 ## Installation
 
