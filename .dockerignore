@@ -1,0 +1,24 @@
+*.sw
+*.swp
+
+.git
+*/.git
+./**/.git
+.gitignore
+
+Dockerfile
+.dockerignore
+.DS_Store
+
+*.md
+!README.md
+
+log/
+./**/log/
+logs/
+./**/logs/
+
+### Ignore local venv ###
+venv/
+venv/**
+
