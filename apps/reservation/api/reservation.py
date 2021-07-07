@@ -30,8 +30,9 @@ class Reservation(ApiView):
     }
 
     def post(self):
-        """Receive webhook message from reserv bot."""
+        """Receive webhook message from reservation bot."""
+        # TODO: Add session flow by chat_id and username(using Redis).
         telegram_info = request.get_json()
         bot = ReservationBot(telegram_info=telegram_info)
-        bot.send_repeat_message()
-        return jsonify(data=[])
+        action_result = bot.action_by_step()
+        return jsonify(data=action_result)
