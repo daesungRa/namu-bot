@@ -2,7 +2,7 @@
 # Maintainer. Ra Daesung (daesungra@gmail.com)
 
 
-VERSION: 0.0.1
+VERSION: 0.0.2
 
 APPS:  # value by application
   reservation:  # iwannayeyak_bot's info
@@ -10,3 +10,8 @@ APPS:  # value by application
     telegram.webhook.SEND_URL:  # request url to telegram bot
     telegram.webhook.STATUS:  # Webhook status
     telegram.webhook.RECEIVE_URL:  # receive url from telegram bot
+
+DB:
+  redis:
+    host:  # host of redis server
+    port:  # port of redis server
