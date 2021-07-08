@@ -9,12 +9,13 @@ import redis
 from config import CONFIG
 
 LOGGER = logging.getLogger(__name__)
+REDIS_CONF = CONFIG['DB']['redis']
 
 
 def _create_redis_object():
     try:
-        host = CONFIG['redis']['host']
-        port = CONFIG['redis']['port']
+        host = REDIS_CONF['host']
+        port = REDIS_CONF['port']
     except KeyError as ke:
         LOGGER.critical(f'Redis config missing, {ke}')
         raise
