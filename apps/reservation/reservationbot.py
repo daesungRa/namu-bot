@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Tuple, Optional
 
 from apps.telegrambot import TelegramBot
 from config import CONFIG
@@ -18,35 +18,41 @@ class ReservationBot(TelegramBot):
 
         super().__init__(telegram_info=telegram_info)
 
-    def _make_contents(self, command: str, data: List):
+    def _make_contents(self, command: str, *args):
         """
-        self.text startswith:
-            '/login ':
-            '/area ':
-            '/date ':
-            '/time ':
-        :return:
-            title: str, body: str
-            None, None
+        Take action and Return response_title, response_body by reservation step.
+        If there is nothing to respond to, it can return a Tuple object filled with None.
+        The action is started with command described below,
+
+        :param command:
+            '/start ': First step of reservation flow. In this case, previous session is initialized.
+            '/disconnect ': Stop the reservation flow. In this case, connected chat's redis session is deleted.
+        :param args:
+            Additional values for each step.
+
+        :return title:
+            Title of response text, string type.
+        :return body:
+            Body of response text, string type.
         """
+        title, body = None, None
+
         if command == '/start':
-            return None, "Please insert ID and PWD.\nInsert format is '/login [ID] [PWD]'"
-        elif command == '/login':
-            login_id, login_pw = data[0], data[1]
-            result = True
-            return f"[LOGIN] {'성공' if len(data) == 2 and result else '실패'}", f'ID: {login_id}, PW: {login_pw}'
-        return None, None
+            self._delete_session()
+            self._touch_or_create_session()
+            title, body = f'Hi, {self.username}', "This is first step of reservation flow."
+        elif command == '/disconnect':
+            self._delete_session()
+            title = f'Bye, {self.username}'
+
+        return title, body
 
     def action_by_step(self) -> Union[Dict, List]:
-        action_result = {}
-        title, body = None, None
-        if self.bot_status == 2:
-            command, *data = self.text.split(' ')
-            title, body = self._make_contents(command, data)
+        """Take action and Return send_result."""
+        if self.bot_status == 2:  # Status of bot_command
+            command, *args = self.text.split(' ')
+            title, body = self._make_contents(command, *args)
+            self.set_response(resp_title=title, resp_body=body)
 
-        self._set_response(resp_title=title, resp_body=body)
-        if self.bot_status >= 2:
-            self._send_response()
-        else:
-            LOGGER.warning(f'[SEND-ACTION] bot_status: {self.bot_status}')
-        return action_result
+        send_result = self.send_response()
+        return {'ok': send_result}
