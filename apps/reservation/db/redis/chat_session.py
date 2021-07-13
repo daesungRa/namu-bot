@@ -7,6 +7,8 @@ import logging
 from datetime import timedelta
 from typing import Dict, Optional
 
+from redis.exceptions import ConnectionError, TimeoutError
+
 from apps.reservation.db.redis import REDIS
 from config import CONFIG
 
@@ -42,16 +44,20 @@ class ChatSession:
         """Update current data to redis server"""
         assert self.username is not None
 
-        REDIS.hmset(
-            name=self.name,
-            mapping={
-                'chat_id': self.chat_id,
-                'username': self.username,
-                **kwargs,
-            },
-        )
-        self.touch()
-        LOGGER.info(f"[REDIS] {self.name} Updated.")
+        try:
+            REDIS.hmset(
+                name=self.name,
+                mapping={
+                    'chat_id': self.chat_id,
+                    'username': self.username,
+                    **kwargs,
+                },
+            )
+        except (ConnectionError, TimeoutError) as e:
+            LOGGER.critical(f'Redis error occurred. > {e}')
+        else:
+            self.touch()
+            LOGGER.info(f"[REDIS] {self.name} Updated.")
 
     def touch(self):
         """Reset TTL"""
