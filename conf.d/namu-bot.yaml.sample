@@ -6,8 +6,8 @@ VERSION: 0.0.3
 
 AUTH:  # Authentication of each app
   reservation:  # iwannayeyak_bot's auth info
-    user_id:  # login id
-    user_password:  # login password
+    seoul.yeyak.id:  # seoul_yeyak id
+    seoul.yeyak.password:  # seoul_yeyak password
 
 APPS:  # value by application
   reservation:  # iwannayeyak_bot's info
