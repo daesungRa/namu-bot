@@ -21,3 +21,9 @@ DB:
     host:  # host of redis server
     port:  # port of redis server
     ttl:  # TTL for chat session
+
+VAL:
+  url:
+    seoul.yeyak:  # seoul_yeyak url
+  selenium:
+    path.chromedriver:  # path of chromedriver
