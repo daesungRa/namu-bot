@@ -85,12 +85,11 @@ class TelegramBot(metaclass=ABCMeta):
         if self.chat_session and self.chat_session.exists():
             self.chat_session.delete()
 
-    def set_response(self, resp_title: str = None, resp_body: str = None):
+    def set_response(self, resp_title: str, resp_body: str = None):
         """Set responses from inserted info."""
         if resp_title is not None:
             self.response_title = resp_title
-        if resp_body is not None:
-            self.response_body = resp_body
+        self.response_body = resp_body  # It can be None
 
     def send_response(self) -> bool:
         """Send message to telegram bot."""
