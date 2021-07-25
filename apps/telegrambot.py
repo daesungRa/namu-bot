@@ -2,6 +2,7 @@ import logging
 import requests
 from abc import ABCMeta, abstractmethod
 from typing import Union, Optional, Dict, List
+from requests.exceptions import HTTPError, ConnectionError
 
 from apps.reservation.db.redis.chat_session import ChatSession
 
@@ -93,27 +94,40 @@ class TelegramBot(metaclass=ABCMeta):
 
     def send_response(self) -> bool:
         """Send message to telegram bot."""
-        if self.bot_status >= 2:
-            assert self.webhook_domain is not None
-            assert self.chat_id is not None
-            assert self.response_title is not None
+        assert self.webhook_domain is not None
+        assert self.chat_id is not None
+        assert self.response_title is not None
 
-            response = self.response_title
-            if self.response_body:
-                response = f'{response}\n\n{self.response_body}'
-            send_result = requests.post(
-                f'{self.webhook_domain}/sendMessage',
-                json={
-                    'chat_id': self.chat_id,
-                    'text': response,
-                }
-            ).json()
-            LOGGER.info(f"> [{self.username}][{send_result['ok']}] "
+        response = self.response_title
+        if self.response_body:
+            response = f'{response}\n\n{self.response_body}'
+
+        result = False
+        if self.bot_status >= 2:
+            try:
+                send_result = requests.post(
+                    f'{self.webhook_domain}/sendMessage',
+                    json={
+                        'chat_id': self.chat_id,
+                        'text': response,
+                    }
+                )
+                send_result.raise_for_status()
+            except (HTTPError, ConnectionError) as e:
+                LOGGER.error(f'Error occurred while sending message response. > {e}')
+                return False
+
+            result_json = send_result.json()
+            LOGGER.info(f"> [{self.username}][{result_json['ok']}] "
                         f"title: {self.response_title}, body: {self.response_body}")
-            return bool(send_result['ok'])
+            result = bool(result_json['ok'])
         else:
             LOGGER.warning(f'Message not sent. bot_status: {self.bot_status}')
-            return False
+
+        # Clear responses already sent
+        if result:
+            self.response_title, self.response_body = None, None
+        return result
 
     @abstractmethod
     def _make_contents(self, command: str, *args): pass
