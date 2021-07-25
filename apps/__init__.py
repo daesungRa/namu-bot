@@ -16,9 +16,10 @@ from logging.handlers import TimedRotatingFileHandler
 from flask import Flask
 from flask_cors import CORS
 
-from apps.flasklib import NamuFlask
-from apps.account.api.root import API as ROOT_API
-from apps.reservation.api.reservation import API as RESERV_API
+from .middleware import AfterThisResponse
+from .flasklib import NamuFlask
+from .account.api.root import API as ROOT_API
+from .reservation.api.reservation import API as RESERV_API
 from config import CONFIG
 
 
@@ -33,9 +34,12 @@ RESERV_RECEIVE_URL = RESERV_CONF['telegram.webhook.RECEIVE_URL']
 def create_app() -> Flask:
     app = NamuFlask(__name__)
 
-    set_logger()
     register_blueprints(app)
+    AfterThisResponse(app)  # Set callback response middleware
+
+    set_logger()
     set_webhooks()
+
     app.config['MAX_CONTENT_LENGTH'] = 1 << 40
     app.config['SECRET_KEY'] = os.urandom(12)
     # app.config['PERMANENT_SESSION_LIFETIME'] = config.session_config['permanent_session_lifetime']
