@@ -1,20 +1,21 @@
 import logging
-from typing import Union, Dict, List, Tuple, Optional
+from typing import Union, Dict, List
 
 from apps.telegrambot import TelegramBot
+from apps.reservation.yeyak import YeyakHandler
+
 from config import CONFIG
 
 
 LOGGER = logging.getLogger(__name__)
-
-_RESERV_CONF = CONFIG['APPS']['reservation']
-_RESERV_WEBHOOK_DOMAIN = f'{_RESERV_CONF["telegram.webhook.SEND_URL"]}{_RESERV_CONF["telegram.bot.API_TOKEN"]}'
+RESERV_CONF = CONFIG['APPS']['reservation']
+RESERV_WEBHOOK_DOMAIN = f'{RESERV_CONF["telegram.webhook.SEND_URL"]}{RESERV_CONF["telegram.bot.API_TOKEN"]}'
 
 
 class ReservationBot(TelegramBot):
     def __init__(self, telegram_info: Dict):
         """Set webhook domain for reservation."""
-        self.webhook_domain = _RESERV_WEBHOOK_DOMAIN
+        self.webhook_domain = RESERV_WEBHOOK_DOMAIN
 
         super().__init__(telegram_info=telegram_info)
 
@@ -40,7 +41,45 @@ class ReservationBot(TelegramBot):
         if command == '/start':
             self._delete_session()
             self._touch_or_create_session()
-            title, body = f'Hi, {self.username}', "This is first step of reservation flow."
+            title = f'하이, {self.username}. 축구장을 예약합니다.'
+            body = "원하는 시설명과 시간대를 입력하세요.\nex) \"/search 보라매 주말\""
+        elif command == '/search':
+            if args and len(args) == 2:
+                facility_name, weektime = args
+
+                # Send first response
+                self.set_response(
+                    resp_title=f'"{facility_name}", "{weektime}" 검색합니다.',
+                    resp_body='100회 탐색 후 종료됩니다.\n결과가 없으면 다시 시도해주세요.',
+                )
+                self.send_response()
+
+                # Get handler and Open base yeyak url
+                yeyak_handler = YeyakHandler()
+                yeyak_handler.open()
+
+                # Login action, Send message
+                # yeyak_handler.login()
+
+                # Search activate facility using param
+                facilities = yeyak_handler.search_facility(facility_name, weektime)
+                new_line = '\n'
+                self.set_response(
+                    resp_title=f'~ 축구장 중간 검색 결과 ~',
+                    resp_body=f'{new_line.join(facilities)} {"(결과 없음)" if not facilities else ""}',
+                )
+                self.send_response()
+
+                # Logout action, Send message
+                # yeyak_handler.logout()
+
+                # Close and Quit browser
+                yeyak_handler.quit()
+
+                # Final response
+                title, body = f'검색 완료됐습니다!', None
+            else:
+                title = f'\"/search [시설명] [시간대]\" 형식으로 입력해주세요.'
         elif command == '/disconnect':
             self._delete_session()
             title = f'Bye, {self.username}'

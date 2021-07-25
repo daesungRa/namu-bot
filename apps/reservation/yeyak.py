@@ -39,3 +39,34 @@ class YeyakHandler(ChromeDriverHandler):
     def logout(self):
         # Click logout button
         self.click_elem(self.search_by_xpath(YEYAK_CONF['xpath.btn_logout']))
+
+    def search_facility(self, facility_name: str, weektime: str):
+        LOGGER.info(f'[SEARCH] Start searching with {facility_name}, {weektime}...')
+
+        # Select facility type to soccer
+        options, cnt = [], 0
+        soccer_code = 'T107'
+        while cnt < 100:
+            # Repeat until 100 count
+            self.action_select(self.search_by_xpath(YEYAK_CONF['xpath.select_facility_type']), soccer_code)
+            self.sleep(2)
+
+            # Search option by facility name
+            select_elem = self.search_by_xpath(YEYAK_CONF['xpath.select_facilities'])
+            options = [
+                option.text
+                for option in select_elem.find_elements_by_tag_name('option')
+                if facility_name in option.text and weektime in option.text
+            ]
+            if options:
+                LOGGER.info(f'[SEARCH] searched! > {options}')
+                break
+
+            # Reload page
+            LOGGER.info(f'[SEARCH][{cnt + 1}] no result. refresh page')
+            self.sleep(1)
+            self.refresh()
+            cnt += 1
+
+        LOGGER.info(f'[SEARCH] Done. search count of {len(options)}')
+        return options
