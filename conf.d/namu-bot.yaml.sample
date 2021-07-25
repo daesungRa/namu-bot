@@ -2,7 +2,7 @@
 # Maintainer. Ra Daesung (daesungra@gmail.com)
 
 
-VERSION: 0.0.3
+VERSION: 0.0.4
 
 AUTH:  # Authentication of each app
   reservation:  # iwannayeyak_bot's auth info
@@ -23,7 +23,12 @@ DB:
     ttl:  # TTL for chat session
 
 VAL:
-  url:
-    seoul.yeyak:  # seoul_yeyak url
+  seoul.yeyak:
+    url:  # seoul_yeyak domain
+    xpath.btn_login:
+    xpath.btn_login_submit:
+    xpath.btn_logout:
+    xpath.input_userid:
+    xpath.input_password:
   selenium:
-    path.chromedriver:  # path of chromedriver
+    path.chromedriver:  # string path of chromedriver
