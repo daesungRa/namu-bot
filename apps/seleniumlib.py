@@ -13,6 +13,8 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.common.exceptions import WebDriverException, UnexpectedAlertPresentException
 
+from selenium.webdriver.support.ui import Select
+
 from config import CONFIG
 
 
@@ -83,6 +85,19 @@ class SeleniumHandler:
         self.driver.get(open_url)
         LOGGER.info(f'URL opened by webdriver.')
 
+    def quit(self):
+        """Close opened web browser."""
+        if self.driver is not None and isinstance(self.driver, RemoteWebDriver) and self.driver.current_url:
+            curr_url = self.driver.current_url
+            self.driver.quit()
+            LOGGER.info(f"Webdriver is closed. current_url is '{curr_url}'")
+
+    def sleep(self, sec: int):
+        sleep(sec)
+
+    def refresh(self):
+        self.driver.refresh()
+
     def search_by_class_name(self, class_name: str): pass
 
     def search_many_by_class_name(self, class_name: str): pass
@@ -95,15 +110,7 @@ class SeleniumHandler:
 
     def click_elem(self, elem: WebElement): pass
 
-    def sleep(self, sec: int):
-        sleep(sec)
-
-    def quit(self):
-        """Close opened web browser."""
-        if self.driver is not None and isinstance(self.driver, RemoteWebDriver) and self.driver.current_url:
-            curr_url = self.driver.current_url
-            self.driver.quit()
-            LOGGER.info(f"Webdriver is closed. current_url is '{curr_url}'")
+    def action_select(self, elem: WebElement, code: str): pass
 
 
 def deco_search_action(func):
@@ -137,10 +144,15 @@ class ChromeDriverHandler(SeleniumHandler):
         """Set and Handling Chrome webdriver."""
         try:
             options = ChromeOptions()
-            options.add_argument('window-size=1920,1080')
+            options.add_argument('window-size=1600,1024')
+            # options.add_argument('window-size=1920,1080')
             # options.add_argument('--headless')
             # options.add_argument('--no-sandbox')
+            # options.add_argument('--disable-gpu')
             # options.add_argument('--disable-dev-shm-usage')
+            # options.add_argument('--disable-extensions')
+            # options.add_argument("--ignore-certificate-errors")
+            # options.add_argument("--disable-popup-blocking")
             driver = Chrome(executable_path=CHROME_DRIVER_PATH, options=options)
         except WebDriverException:
             raise WebDriverPathError(path=CHROME_DRIVER_PATH)
@@ -170,3 +182,7 @@ class ChromeDriverHandler(SeleniumHandler):
     @deco_elem_action
     def click_elem(self, elem: WebElement):
         elem.click()
+
+    @deco_elem_action
+    def action_select(self, elem: WebElement, code: str):
+        Select(elem).select_by_value(code)
