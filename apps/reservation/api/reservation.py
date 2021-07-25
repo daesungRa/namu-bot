@@ -4,7 +4,7 @@ MAINTAINER: Ra Daesung (daesungra@gmail.com)
 """
 
 import logging
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 
 from apps.flasklib import ApiBlueprint, ApiView
 from apps.exception import DetailedNotFoundError
@@ -33,6 +33,11 @@ class Reservation(ApiView):
         """Receive webhook message from reservation bot."""
         # TODO: Add session flow by chat_id and username(using Redis).
         telegram_info = request.get_json()
-        bot = ReservationBot(telegram_info=telegram_info)
-        action_result = bot.action_by_step()
-        return jsonify(data=action_result)
+
+        @current_app.after_this_response
+        def post_process():
+            # this will occur after you finish processing the route & return (below):
+            bot = ReservationBot(telegram_info=telegram_info)
+            bot.action_by_step()
+
+        return jsonify(data={})
