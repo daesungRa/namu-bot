@@ -19,7 +19,7 @@ class ReservationBot(TelegramBot):
 
         super().__init__(telegram_info=telegram_info)
 
-    def _make_contents(self, command: str, *args):
+    def _make_contents(self, command: str, facility_name: str = None, weektime: str = None, *args):
         """
         Take action and Return response_title, response_body by reservation step.
         If there is nothing to respond to, it can return a Tuple object filled with None.
@@ -36,20 +36,19 @@ class ReservationBot(TelegramBot):
         :return body:
             Body of response text, string type.
         """
-        title, body = None, None
+        title, body, additional_word = None, None, args[0] if args else None
 
         if command == '/start':
             self._delete_session()
             self._touch_or_create_session()
             title = f'하이, {self.username}. 축구장을 예약합니다.'
-            body = "원하는 시설명과 시간대를 입력하세요.\nex) \"/search 보라매 주말\""
+            body = "원하는 [시설명]과 [시간대], [추가검색어]을 입력하세요.\nex) \"/search 보라매 [평일/주말] [추가검색어]\""
         elif command == '/search':
-            if args and len(args) == 2:
-                facility_name, weektime = args
-
+            if facility_name is not None and weektime is not None and weektime in ['평일', '주말']:
                 # Send first response
+                word = f'"{additional_word}"'
                 self.set_response(
-                    resp_title=f'"{facility_name}", "{weektime}" 검색합니다.',
+                    resp_title=f'"{facility_name}", "{weektime}" {additional_word and word or ""} 검색합니다.',
                     resp_body='100회 탐색 후 종료됩니다.\n결과가 없으면 다시 시도해주세요.',
                 )
                 self.send_response()
@@ -58,20 +57,17 @@ class ReservationBot(TelegramBot):
                 yeyak_handler = YeyakHandler()
                 yeyak_handler.open()
 
-                # Login action, Send message
-                # yeyak_handler.login()
-
                 # Search activate facility using param
                 facilities = yeyak_handler.search_facility(facility_name, weektime)
+                if facilities and additional_word:
+                    facilities = [f for f in facilities if additional_word in f]
                 new_line = '\n'
+                body_tail = f'{new_line}{new_line}예약하려면, "/yeyak {facility_name} {weektime} [추가검색어]"'
                 self.set_response(
                     resp_title=f'~ 축구장 중간 검색 결과 ~',
-                    resp_body=f'{new_line.join(facilities)} {"(결과 없음)" if not facilities else ""}',
+                    resp_body=f'{new_line.join(facilities)}{"(결과 없음)" if not facilities else body_tail}',
                 )
                 self.send_response()
-
-                # Logout action, Send message
-                # yeyak_handler.logout()
 
                 # Close and Quit browser
                 yeyak_handler.quit()
@@ -79,7 +75,7 @@ class ReservationBot(TelegramBot):
                 # Final response
                 title, body = f'검색 완료됐습니다!', None
             else:
-                title = f'\"/search [시설명] [시간대]\" 형식으로 입력해주세요.'
+                title = f'\"/search [시설명] [시간대] [추가검색어]\" 형식으로 입력해주세요.\nex) \"/search 보라매 주말 [추가검색어]\"'
         elif command == '/disconnect':
             self._delete_session()
             title = f'Bye, {self.username}'
