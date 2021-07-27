@@ -45,7 +45,7 @@ class ReservationBot(TelegramBot):
             body = "원하는 [시설명]과 [시간대], [추가검색어]을 입력하세요.\nex) \"/search 보라매 [평일/주말] [추가검색어]\""
         elif command == '/search':
             if facility_name is not None and weektime is not None and weektime in ['평일', '주말']:
-                # Send first response
+                # Send first message
                 word = f'"{additional_word}"'
                 self.set_response(
                     resp_title=f'"{facility_name}", "{weektime}" {additional_word and word or ""} 검색합니다.',
@@ -57,28 +57,56 @@ class ReservationBot(TelegramBot):
                 yeyak_handler = YeyakHandler()
                 yeyak_handler.open()
 
-                # Search activate facility using param
-                facilities = yeyak_handler.search_facility(facility_name, weektime)
-                if facilities and additional_word:
-                    facilities = [f for f in facilities if additional_word in f]
+                # Search open facilities using param
+                facilities = []
+                for result in yeyak_handler.search_facility(facility_name, weektime, additional_word):  # Use generator
+                    if result and isinstance(result, int):
+                        self.set_response(resp_title=f'{result}회 검색')
+                        self.send_response()
+                    elif result and isinstance(result, list):
+                        facilities = result
+
+                # Send message of search result
                 new_line = '\n'
-                body_tail = f'{new_line}{new_line}예약하려면, "/yeyak {facility_name} {weektime} [추가검색어]"'
+                body_tail = f'{new_line}{new_line}예약하려면, "/yeyak {facility_name} {weektime} [추가검색어]"'\
+                    if len(facilities) > 1 else ''
                 self.set_response(
-                    resp_title=f'~ 축구장 중간 검색 결과 ~',
-                    resp_body=f'{new_line.join(facilities)}{"(결과 없음)" if not facilities else body_tail}',
+                    resp_title=f'~ 축구장 검색 결과 ~',
+                    resp_body=f'{new_line.join([f[1] for f in facilities])}'
+                              f'{"(결과 없음)" if not facilities else body_tail}',
                 )
                 self.send_response()
+
+                # Activate yeyak there is only one result
+                if len(facilities) == 1:
+                    self.set_response(
+                        resp_title=f'"{facilities[0][1]}" 예약을 시작합니다.',
+                    )
+                    self.send_response()
+
+                    # Login action, Send message
+                    yeyak_handler.login()
+                    self.set_response(resp_title='로그인 성공.')
+                    self.send_response()
+
+                    # Action
+                    yeyak_handler.yeyak_facility(facility_name, weektime, additional_word)
+
+                    # Logout action, Send message
+                    yeyak_handler.logout()
+                    self.set_response(resp_title='로그아웃 성공.')
+                    self.send_response()
 
                 # Close and Quit browser
                 yeyak_handler.quit()
 
-                # Final response
-                title, body = f'검색 완료됐습니다!', None
+                # Final message
+                title, body = f'완료됐습니다!', None
             else:
                 title = f'\"/search [시설명] [시간대] [추가검색어]\" 형식으로 입력해주세요.\nex) \"/search 보라매 주말 [추가검색어]\"'
         elif command == '/yeyak':
             if facility_name is not None and weektime is not None and weektime in ['평일', '주말']:
-                # Send first response
+                # Send first message
                 word = f'"{additional_word}"'
                 self.set_response(
                     resp_title=f'"{facility_name}", "{weektime}" {additional_word and word or ""} 시설을 예약합니다.'
@@ -105,7 +133,7 @@ class ReservationBot(TelegramBot):
                 # Close and Quit browser
                 yeyak_handler.quit()
 
-                # Final response
+                # Final message
                 title, body = f'예약 완료됐습니다!', '(예약정보)'
         elif command == '/disconnect':
             self._delete_session()

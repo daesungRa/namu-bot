@@ -40,7 +40,7 @@ class YeyakHandler(ChromeDriverHandler):
         # Click logout button
         self.click_elem(self.search_by_xpath(YEYAK_CONF['xpath.btn_logout']))
 
-    def search_facility(self, facility_name: str, weektime: str):
+    def search_facility(self, facility_name: str, weektime: str, additional_word: str = None):
         LOGGER.info(f'[SEARCH] Start searching with {facility_name}, {weektime}...')
 
         options, cnt = [], 0
@@ -54,13 +54,24 @@ class YeyakHandler(ChromeDriverHandler):
             # Search option by inserted param
             select_elem = self.search_by_xpath(YEYAK_CONF['xpath.select_facilities'])
             options = [
-                option.text
+                (option.get_property('value'), option.text)
                 for option in select_elem.find_elements_by_tag_name('option')
                 if facility_name in option.text and weektime in option.text
             ]
+
+            # Match additional word
+            if additional_word:
+                options = [o for o in options if additional_word in o[1]]
+
+            # Return and Break if options is not empty
             if options:
                 LOGGER.info(f'[SEARCH] searched! > {options}')
+                yield options
                 break
+
+            # Yield every 10 count
+            if cnt % 10 == 9:
+                yield cnt + 1
 
             # Reload page
             LOGGER.info(f'[SEARCH][{cnt + 1}] no result. refresh page')
@@ -69,7 +80,6 @@ class YeyakHandler(ChromeDriverHandler):
             cnt += 1
 
         LOGGER.info(f'[SEARCH] Done. search count of {len(options)}')
-        return options
 
     def yeyak_facility(self, facility_name: str, weektime: str, additional_word: str = None):
         word = f', {additional_word}'
