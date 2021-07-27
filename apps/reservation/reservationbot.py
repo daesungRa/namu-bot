@@ -76,6 +76,37 @@ class ReservationBot(TelegramBot):
                 title, body = f'검색 완료됐습니다!', None
             else:
                 title = f'\"/search [시설명] [시간대] [추가검색어]\" 형식으로 입력해주세요.\nex) \"/search 보라매 주말 [추가검색어]\"'
+        elif command == '/yeyak':
+            if facility_name is not None and weektime is not None and weektime in ['평일', '주말']:
+                # Send first response
+                word = f'"{additional_word}"'
+                self.set_response(
+                    resp_title=f'"{facility_name}", "{weektime}" {additional_word and word or ""} 시설을 예약합니다.'
+                )
+                self.send_response()
+
+                # Get handler and Open base yeyak url
+                yeyak_handler = YeyakHandler()
+                yeyak_handler.open()
+
+                # Login action, Send message
+                yeyak_handler.login()
+                self.set_response(resp_title='로그인 성공.')
+                self.send_response()
+
+                # Action
+                yeyak_handler.yeyak_facility(facility_name, weektime, additional_word)
+
+                # Logout action, Send message
+                yeyak_handler.logout()
+                self.set_response(resp_title='로그아웃 성공.')
+                self.send_response()
+
+                # Close and Quit browser
+                yeyak_handler.quit()
+
+                # Final response
+                title, body = f'예약 완료됐습니다!', '(예약정보)'
         elif command == '/disconnect':
             self._delete_session()
             title = f'Bye, {self.username}'
