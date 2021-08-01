@@ -4,12 +4,29 @@ MAINTAINER: Ra Daesung (daesungra@gmail.com)
 """
 
 import logging
+import functools
+import warnings
 from typing import Type, Union, Dict, List
 
 from flask import Flask, Blueprint, request, Response, render_template, jsonify
 from flask.views import MethodView
 
 from .exception import NamuApiException, ClientError, NotFoundError
+
+
+def deprecated(func):
+    """Set inserted function or method to be deprecated"""
+    @functools.wraps(func)
+    def _wrapper(*args, **kwargs):
+        warnings.simplefilter('always', DeprecationWarning)  # Turn off filter
+        warnings.warn(
+            message=f"Call to deprecated function or method '{func.__name__}'.",
+            category=DeprecationWarning,
+            stacklevel=2
+        )
+        warnings.simplefilter('default', DeprecationWarning)  # Reset filter
+        return func(*args, **kwargs)
+    return _wrapper
 
 
 class ApiView(MethodView):
