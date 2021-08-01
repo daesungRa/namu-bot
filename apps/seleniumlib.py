@@ -130,12 +130,12 @@ def deco_elem_action(func):
         # TODO: Add more necessary pre_process
         assert elem is not None and isinstance(elem, WebElement)
         try:
-            func(self, elem, *args, **kwargs)
+            return func(self, elem, *args, **kwargs)
         except UnexpectedAlertPresentException as uae:
             LOGGER.exception(f'Unexpected Alert Error occurred: {uae}')
             self.driver.switch_to.alert.accept()
             # Try again after alert clear
-            func(self, elem, *args, **kwargs)
+            return func(self, elem, *args, **kwargs)
     return _wrapper
 
 
