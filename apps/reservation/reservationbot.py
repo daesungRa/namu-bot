@@ -1,6 +1,7 @@
 import logging
 from typing import Union, Dict, List
 
+from apps.flasklib import deprecated
 from apps.telegrambot import TelegramBot
 from apps.reservation.yeyak import YeyakHandler
 
@@ -19,6 +20,7 @@ class ReservationBot(TelegramBot):
 
         super().__init__(telegram_info=telegram_info)
 
+    @deprecated
     def _make_contents(self, command: str, facility_name: str = None, weektime: str = None, *args):
         """
         Take action and Return response_title, response_body by reservation step.
