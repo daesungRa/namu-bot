@@ -2,6 +2,7 @@ import logging
 
 from selenium.webdriver.common.keys import Keys
 
+from apps.flasklib import deprecated
 from apps.seleniumlib import ChromeDriverHandler
 
 from config import CONFIG
@@ -40,6 +41,7 @@ class YeyakHandler(ChromeDriverHandler):
         # Click logout button
         self.click_elem(self.search_by_xpath(YEYAK_CONF['xpath.btn_logout']))
 
+    @deprecated
     def search_facility(self, facility_name: str, weektime: str, additional_word: str = None):
         LOGGER.info(f'[SEARCH] Start searching with {facility_name}, {weektime}...')
 
@@ -81,6 +83,7 @@ class YeyakHandler(ChromeDriverHandler):
 
         LOGGER.info(f'[SEARCH] Done. search count of {len(options)}')
 
+    @deprecated
     def yeyak_facility(self, facility_name: str, weektime: str, additional_word: str = None):
         word = f', {additional_word}'
         LOGGER.info(
