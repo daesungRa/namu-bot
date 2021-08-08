@@ -5,7 +5,7 @@ MAINTAINER: Ra Daesung (daesungra@gmail.com)
 
 import logging
 import functools
-from typing import Optional, Type
+from typing import Union, Optional, Type
 from time import sleep
 
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
@@ -92,7 +92,12 @@ class SeleniumHandler:
             self.driver.quit()
             LOGGER.info(f"Webdriver is closed. current_url is '{curr_url}'")
 
-    def sleep(self, sec: int):
+    def sleep(self, sec: Union[int, float] = 1):
+        """
+        Interval sleep by sec
+
+        :param sec: it can be of type int or float. default is 1.
+        """
         sleep(sec)
 
     def refresh(self):
