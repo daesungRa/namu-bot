@@ -5,7 +5,7 @@ MAINTAINER: Ra Daesung (daesungra@gmail.com)
 
 import logging
 import functools
-from typing import Optional, Type
+from typing import Union, Optional, Type
 from time import sleep
 
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
@@ -92,7 +92,12 @@ class SeleniumHandler:
             self.driver.quit()
             LOGGER.info(f"Webdriver is closed. current_url is '{curr_url}'")
 
-    def sleep(self, sec: int):
+    def sleep(self, sec: Union[int, float] = 1):
+        """
+        Interval sleep by sec
+
+        :param sec: it can be of type int or float. default is 1.
+        """
         sleep(sec)
 
     def refresh(self):
@@ -116,10 +121,10 @@ class SeleniumHandler:
 def deco_search_action(func):
     """Decorate selenium action"""
     @functools.wraps(func)
-    def _wrapper(self: SeleniumHandler, search_key: str, *args, **kwargs):
+    def _wrapper(self: SeleniumHandler, search_key: str, elem: WebElement = None, *args, **kwargs):
         # TODO: Add more necessary pre_process
         assert search_key is not None and isinstance(search_key, str)
-        return func(self, search_key, *args, **kwargs)
+        return func(self, search_key, elem, *args, **kwargs)
     return _wrapper
 
 
@@ -160,19 +165,27 @@ class ChromeDriverHandler(SeleniumHandler):
         super().__init__(driver=driver, driver_not_found_error=ChromeDriverNotFoundError, url=url)
 
     @deco_search_action
-    def search_by_class_name(self, class_name: str):
+    def search_by_class_name(self, class_name: str, elem: WebElement = None):
+        if elem is not None:
+            return elem.find_element_by_class_name(class_name)
         return self.driver.find_element_by_class_name(class_name)
 
     @deco_search_action
-    def search_many_by_class_name(self, class_name: str):
+    def search_many_by_class_name(self, class_name: str, elem: WebElement = None):
+        if elem is not None:
+            return elem.find_elements_by_class_name(class_name)
         return self.driver.find_elements_by_class_name(class_name)
 
     @deco_search_action
-    def search_by_id(self, id_val: str):
+    def search_by_id(self, id_val: str, elem: WebElement = None):
+        if elem is not None:
+            return elem.find_element_by_id(id_val)
         return self.driver.find_element_by_id(id_val)
 
     @deco_search_action
-    def search_by_xpath(self, xpath: str):
+    def search_by_xpath(self, xpath: str, elem: WebElement = None):
+        if elem is not None:
+            return elem.find_element_by_xpath(xpath)
         return self.driver.find_element_by_xpath(xpath)
 
     @deco_elem_action
