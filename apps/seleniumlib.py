@@ -188,6 +188,18 @@ class ChromeDriverHandler(SeleniumHandler):
             return elem.find_element_by_xpath(xpath)
         return self.driver.find_element_by_xpath(xpath)
 
+    @deco_search_action
+    def search_by_tag_name(self, tag_name: str, elem: WebElement = None):
+        if elem is not None:
+            return elem.find_element_by_tag_name(tag_name)
+        return self.driver.find_element_by_tag_name(tag_name)
+
+    @deco_search_action
+    def search_many_by_tag_name(self, tag_name: str, elem: WebElement = None):
+        if elem is not None:
+            return elem.find_elements_by_tag_name(tag_name)
+        return self.driver.find_elements_by_tag_name(tag_name)
+
     @deco_elem_action
     def send_keys_to_elem(self, elem: WebElement, key: str):
         elem.send_keys(key)
