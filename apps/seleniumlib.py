@@ -103,13 +103,17 @@ class SeleniumHandler:
     def refresh(self):
         self.driver.refresh()
 
-    def search_by_class_name(self, class_name: str): pass
+    def search_by_class_name(self, class_name: str, elem: WebElement = None): pass
 
-    def search_many_by_class_name(self, class_name: str): pass
+    def search_many_by_class_name(self, class_name: str, elem: WebElement = None): pass
 
-    def search_by_id(self, id_val: str): pass
+    def search_by_id(self, id_val: str, elem: WebElement = None): pass
 
-    def search_by_xpath(self, xpath: str): pass
+    def search_by_xpath(self, xpath: str, elem: WebElement = None): pass
+
+    def search_by_tag_name(self, tag_name: str, elem: WebElement = None): pass
+
+    def search_many_by_tag_name(self, tag_name: str, elem: WebElement = None): pass
 
     def send_keys_to_elem(self, elem: WebElement, key: str): pass
 
@@ -151,9 +155,9 @@ class ChromeDriverHandler(SeleniumHandler):
             options = ChromeOptions()
             options.add_argument('window-size=1600,1024')
             # options.add_argument('window-size=1920,1080')
-            # options.add_argument('--headless')
+            options.add_argument('headless')
+            options.add_argument('disable-gpu')
             # options.add_argument('--no-sandbox')
-            # options.add_argument('--disable-gpu')
             # options.add_argument('--disable-dev-shm-usage')
             # options.add_argument('--disable-extensions')
             # options.add_argument("--ignore-certificate-errors")
