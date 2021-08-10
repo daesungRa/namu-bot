@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Tuple
 
 from apps.flasklib import deprecated
 from apps.telegrambot import TelegramBot
@@ -143,11 +143,53 @@ class ReservationBot(TelegramBot):
 
         return title, body
 
+    def _execute_yeyak(self, command: str):
+        """
+        Facility Reservation.
+        Target Facility -> song-pa, jamsil, boramae
+        Reserve Time -> Saturday 7th and 8th quarter / Sunday 3rd, 4th and 5th quarter (12th, 13th, 14th)
+
+        Take action and Return response_title, response_body for telegram chat.
+        If there is nothing to respond to, it can return a Tuple object filled with None.
+        """
+        title, body = None, None
+
+        if command != '/start':  # Only work with '/start' command
+            return title, body
+
+        # Send init message
+        self.set_response(resp_title=f'예약 가능한 시설을 검색합니다. (최대 100회 탐색)')
+        self.send_response()
+
+        # Open domain site in browser
+        yeyak_handler = YeyakHandler()
+        yeyak_handler.open()
+
+        # Search and Reserve valid facility
+        target, quarter = ('송파구여성', '잠실유수지', '보라매'), (7, 8, 12, 13, 14)  # TODO: Make these to CONFIG variables
+        for result in yeyak_handler.yeyak(target, quarter, self.username):  # Use generator
+            if result and isinstance(result, int):
+                self.set_response(resp_title=f'{result}회 검색중...')
+                self.send_response()
+            elif result and isinstance(result, Tuple) and len(result) == 2:  # title, body
+                title, body = result
+
+        # Close and Quit browser
+        yeyak_handler.quit()
+
+        # Final message
+        return title, body
+
     def action_by_step(self) -> Union[Dict, List]:
         """Take action and Return send_result."""
         if self.bot_status == 2:  # Status of bot_command
             command, *args = self.text.split(' ')
-            title, body = self._make_contents(command, *args)
+            if command == '/start':  # Reserve at once
+                title, body = self._execute_yeyak(command)
+            elif command == '/disconnect':
+                title, body = f'Bye, {self.username}', None
+            else:  # Legacy condition
+                title, body = self._make_contents(command, *args)
             self.set_response(resp_title=title, resp_body=body)
 
         send_result = self.send_response()
