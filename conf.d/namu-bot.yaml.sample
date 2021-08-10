@@ -30,5 +30,7 @@ VAL:
     xpath.btn_logout:
     xpath.input_userid:
     xpath.input_password:
+    xpath.select_facility_type:
+    xpath.select_facilities:
   selenium:
     path.chromedriver:  # string path of chromedriver
