@@ -3,10 +3,10 @@ MAINTAINER Ra Daesung "daesungra@gmail.com"
 
 ### Write commands for flask docker image ###
 # Make a default config and Deploy server source
-RUN mkdir -p /serve/facility-reserv
+RUN mkdir -p /serve/namu-bot
 
-WORKDIR /serve/facility-reserv
-COPY . /serve/facility-reserv/
+WORKDIR /serve/namu-bot
+COPY . /serve/namu-bot/
 
 # Set pip virtual environment
 RUN pip install --upgrade pip virtualenv
@@ -15,5 +15,5 @@ RUN virtualenv venv && \
     pip install -r requirements.txt
 
 # Default commands to be executed when instance starts
-# CMD /bin/sh /serve/facility-reserv/run_app.sh
+# CMD /bin/sh /serve/namu-bot/run_app.sh
 
