@@ -12,4 +12,4 @@ gunicorn --workers 1 \
 	--worker-class gevent \
 	--timeout 30 \
 	--name app \
-	app.server:app
+	apps.server:app
