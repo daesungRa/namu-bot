@@ -1,4 +1,4 @@
-FROM server-nginx:21.06.1
+FROM server-nginx:21.08.1
 MAINTAINER Ra Daesung "daesungra@gmail.com"
 
 ### Write commands for flask docker image ###
