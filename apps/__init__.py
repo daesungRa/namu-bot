@@ -18,8 +18,9 @@ from flask_cors import CORS
 
 from .middleware import AfterThisResponse
 from .flasklib import NamuFlask
-from .account.api.root import API as ROOT_API
-from .reservation.api.reservation import API as RESERV_API
+from .base.api.base import API as BASE_API
+from .account.api.account import API as ACCOUNT_API
+from .reservation.api.reservation import API as RESERVATION_API
 from config import CONFIG
 
 
@@ -85,8 +86,9 @@ def set_logger():
 
 
 def register_blueprints(app: Flask):
-    app.register_blueprint(ROOT_API)
-    app.register_blueprint(RESERV_API)
+    app.register_blueprint(BASE_API)
+    app.register_blueprint(ACCOUNT_API)
+    app.register_blueprint(RESERVATION_API)
 
 
 def set_webhooks():
