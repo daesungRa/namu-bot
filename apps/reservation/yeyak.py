@@ -278,16 +278,16 @@ class YeyakHandler(ChromeDriverHandler):
                             self.send_keys_to_elem(self.search_by_id('form_email1'), register_email_id)  # 이메일
                             self.send_keys_to_elem(self.search_by_id('form_email2'), register_email_domain)
 
-                            # TODO: yeyak!!
-                            # Yeyak for matched target!!
-                            self.click_elem(self.search_by_xpath(  # Click final yeyak button
-                                '/html/body/div/div[3]/div[2]/div/div[1]/form/div[3]/div[3]/div/div[3]/button'))
-                            self.driver.switch_to.alert.accept()  # Pass existing alert
+                            # Yeyak for matched target if not in test mode!!
+                            if not self.test:
+                                self.click_elem(self.search_by_xpath(  # Click final yeyak button
+                                    '/html/body/div/div[3]/div[2]/div/div[1]/form/div[3]/div[3]/div/div[3]/button'))
+                                self.driver.switch_to.alert.accept()  # Pass existing alert
 
                             self.sleep(3)
 
                             # Return reservation message
-                            return f'예약 완료!', \
+                            return f'{"[TEST] " if self.test else ""}예약 완료!', \
                                    f'- 시설명: {facility_name}\n' \
                                    f'- 일시: {register_date}\n' \
                                    f'- 예약자명: {username}\n' \

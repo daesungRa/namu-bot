@@ -143,7 +143,7 @@ class ReservationBot(TelegramBot):
 
         return title, body
 
-    def _execute_yeyak(self, command: str):
+    def _execute_yeyak(self, command: str, **kwargs):
         """
         Facility Reservation.
         Target Facility -> song-pa, jamsil, boramae
@@ -154,7 +154,7 @@ class ReservationBot(TelegramBot):
         """
         title, body = None, None
 
-        if command != '/start':  # Only work with '/start' command
+        if command != '/yeyak':  # Only work with '/yeyak' command
             return title, body
 
         # Send init message
@@ -163,6 +163,8 @@ class ReservationBot(TelegramBot):
 
         # Open domain site in browser
         yeyak_handler = YeyakHandler()
+        if 'test' in kwargs and kwargs['test']:
+            yeyak_handler.test = kwargs['test']
         yeyak_handler.open()
 
         # Search and Reserve valid facility
@@ -184,8 +186,13 @@ class ReservationBot(TelegramBot):
         """Take action and Return send_result."""
         if self.bot_status == 2:  # Status of bot_command
             command, *args = self.text.split(' ')
-            if command == '/start':  # Reserve at once
+            if command == '/start':
+                title = f'하이, {self.username}👋. 예약 봇을 시작합니다.'
+                body = '예약하려면 "/yeyak" 을, 테스트하려면 "/testyeyak" 을 입력하세요.'
+            elif command == '/yeyak':  # Reserve at once
                 title, body = self._execute_yeyak(command)
+            elif command == '/testyeyak':  # Check possibility
+                title, body = self._execute_yeyak(command='/yeyak', test=True)
             elif command == '/disconnect':
                 title, body = f'Bye, {self.username}', None
             else:  # Legacy condition
