@@ -70,8 +70,19 @@ class SeleniumHandler:
             self.driver_not_found_error = driver_not_found_error
         if url:
             self.url = url
+        self._test = False
 
         LOGGER.info(f'Chrome webdriver handler is set.')
+
+    @property
+    def test(self):
+        return self._test
+
+    @test.setter
+    def test(self, test: bool):
+        assert isinstance(test, bool)
+
+        self._test = test
 
     def open(self, url: str = None):
         """Open web browser using self.driver and open_url."""
