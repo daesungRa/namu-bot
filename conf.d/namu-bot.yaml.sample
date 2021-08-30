@@ -2,7 +2,7 @@
 # Maintainer. Ra Daesung (daesungra@gmail.com)
 
 
-VERSION: 0.0.4
+VERSION: 0.0.5
 
 AUTH:  # Authentication of each app
   reservation:  # iwannayeyak_bot's auth info
@@ -24,13 +24,31 @@ DB:
 
 VAL:
   seoul.yeyak:
-    url:  # seoul_yeyak domain
-    xpath.btn_login:
-    xpath.btn_login_submit:
-    xpath.btn_logout:
-    xpath.input_userid:
-    xpath.input_password:
-    xpath.select_facility_type:
-    xpath.select_facilities:
+    chrome:
+      url:  # seoul_yeyak url
+      xpath.lang_tit:
+      xpath.lang_kor:
+      xpath.lang_eng:
+      xpath.btn_login:
+      xpath.btn_login_submit:
+      xpath.btn_logout:
+      xpath.input_userid:
+      xpath.input_password:
+      xpath.select_facility_type:
+      xpath.select_facilities:
+    firefox:
+      url:  # seoul_yeyak url
+      xpath.lang_tit:
+      xpath.lang_kor:
+      xpath.lang_eng:
+      xpath.btn_login:
+      xpath.btn_login_submit:
+      xpath.btn_logout:
+      xpath.input_userid:
+      xpath.input_password:
+      xpath.select_facility_type:
+      xpath.select_facilities:
   selenium:
     path.chromedriver:  # string path of chromedriver
+    path.geckodriver:  # string path of geckodriver for firefox
+
