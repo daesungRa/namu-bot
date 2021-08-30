@@ -8,7 +8,7 @@ service nginx restart
 . ./venv/bin/activate
 # gunicorn --workers 1 --threads 8 --worker-class gevent --timeout 30 --name app app.server:app
 gunicorn --workers 1 \
-	--threads 8 \
+	--threads 1 \
 	--worker-class gevent \
 	--timeout 30 \
 	--name app \
