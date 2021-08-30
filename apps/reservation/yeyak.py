@@ -14,36 +14,37 @@ from config import CONFIG
 
 LOGGER = logging.getLogger(__name__)
 AUTH_CONF = CONFIG['AUTH']['reservation']
-YEYAK_CONF = CONFIG['VAL']['seoul.yeyak']
+CHROME_YEYAK_CONF = CONFIG['VAL']['seoul.yeyak']['chrome']
+FIREFOX_YEYAK_CONF = CONFIG['VAL']['seoul.yeyak']['firefox']
 
 
 class YeyakHandler(ChromeDriverHandler):
     def __init__(self):
-        super().__init__(url=YEYAK_CONF['url'])
+        super().__init__(url=FIREFOX_YEYAK_CONF['url'])
 
     def login(self, userid: str = None, password: str = None):
         # Go to login page
-        elem = self.search_by_xpath(YEYAK_CONF['xpath.btn_login'])
-        self.click_elem(elem=self.search_by_xpath(YEYAK_CONF['xpath.btn_login']))
+        elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_login'])
+        self.click_elem(elem=self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_login']))
 
         # Insert id, pwd
-        input_userid = self.search_by_xpath(YEYAK_CONF['xpath.input_userid'])
+        input_userid = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.input_userid'])
         self.send_keys_to_elem(
             elem=input_userid,
             key=userid if userid else AUTH_CONF['seoul.yeyak.id']
         )
-        input_password = self.search_by_xpath(YEYAK_CONF['xpath.input_password'])
+        input_password = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.input_password'])
         self.send_keys_to_elem(
             elem=input_password,
             key=password if password else AUTH_CONF['seoul.yeyak.password']
         )
 
         # Click submit button
-        self.click_elem(self.search_by_xpath(YEYAK_CONF['xpath.btn_login_submit']))
+        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_login_submit']))
 
     def logout(self):
         # Click logout button
-        self.click_elem(self.search_by_xpath(YEYAK_CONF['xpath.btn_logout']))
+        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_logout']))
 
     @deprecated
     def search_facility(self, facility_name: str, weektime: str, additional_word: str = None):
@@ -54,11 +55,11 @@ class YeyakHandler(ChromeDriverHandler):
         # Repeat until 100 count
         while cnt < 100:
             # Select facility type to soccer
-            self.action_select(self.search_by_xpath(YEYAK_CONF['xpath.select_facility_type']), soccer_code)
+            self.action_select(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
             self.sleep(2)
 
             # Search option by inserted param
-            select_elem = self.search_by_xpath(YEYAK_CONF['xpath.select_facilities'])
+            select_elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facilities'])
             options = [
                 (option.get_property('value'), option.text)
                 for option in select_elem.find_elements_by_tag_name('option')
@@ -97,11 +98,11 @@ class YeyakHandler(ChromeDriverHandler):
 
         # Select facility type to soccer
         soccer_code = 'T107'
-        self.action_select(self.search_by_xpath(YEYAK_CONF['xpath.select_facility_type']), soccer_code)
+        self.action_select(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
         self.sleep(2)
 
         # Select option by inserted param
-        select_elem = self.search_by_xpath(YEYAK_CONF['xpath.select_facilities'])
+        select_elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facilities'])
         options = [
             (option.get_property('value'), option.text)
             for option in select_elem.find_elements_by_tag_name('option')
@@ -151,6 +152,11 @@ class YeyakHandler(ChromeDriverHandler):
     def yeyak(self, target: Optional[Tuple], quarter: Optional[Tuple], username: str) -> Optional[Tuple]:
         title, body = '검색 결과가 없습니다. 다시 시도해 주세요.', None
 
+        # Set to version of Korean
+        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.lang_tit']))
+        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.lang_kor']))
+        self.sleep(2)
+
         if not target:
             target = ('송파구여성', '잠실유수지', '보라매')
         target_weekend = ('주말', '토, ', ', 일')
@@ -166,11 +172,11 @@ class YeyakHandler(ChromeDriverHandler):
         soccer_code, cnt = 'T107', 0
         while cnt < 100:
             # Select facility type to soccer
-            self.action_select(self.search_by_xpath(YEYAK_CONF['xpath.select_facility_type']), soccer_code)
+            self.action_select(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
             self.sleep(2)
 
             # Search option by target
-            select_elem = self.search_by_xpath(YEYAK_CONF['xpath.select_facilities'])
+            select_elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facilities'])
             options = [
                 (option.get_property('value'), option.text)
                 for option in self.search_many_by_tag_name('option', select_elem)
@@ -270,10 +276,13 @@ class YeyakHandler(ChromeDriverHandler):
                                 except Exception:
                                     LOGGER.error(f'[YEYAK] An error occurred clicking label for, '
                                                  f'"chk_info", "chk_agree_all"')
-                            self.click_elem(
-                                self.search_by_xpath('/html/body/div/div[3]/div[2]/div/div[1]/form/div[3]'
-                                                     '/div[2]/div[5]/table/tbody/tr[1]/td/span[2]/label')
-                            )  # Select radio label for '단체'
+                            try:
+                                self.click_elem(
+                                    self.search_by_xpath('/html/body/div/div[3]/div[2]/div/div[1]/form/div[3]'
+                                                         '/div[2]/div[5]/table/tbody/tr[1]/td/span[2]/label')
+                                )  # Select radio label for '단체'
+                            except Exception:
+                                LOGGER.exception(f'There is no radio element for "단체"')
                             self.send_keys_to_elem(self.search_by_id('grp_nm'), group_name)  # 단체명
                             self.send_keys_to_elem(self.search_by_id('form_email1'), register_email_id)  # 이메일
                             self.send_keys_to_elem(self.search_by_id('form_email2'), register_email_domain)
