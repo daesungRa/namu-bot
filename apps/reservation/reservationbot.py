@@ -182,6 +182,212 @@ class ReservationBot(TelegramBot):
         # Final message
         return title, body
 
+    def _execute_onestep(self, command: str, **kwargs):
+        import time
+        import functools
+
+        from selenium.webdriver import Chrome, ChromeOptions
+        from selenium.webdriver.support.ui import Select
+
+        CHROME_DRIVER_PATH = CONFIG['VAL']['selenium']['path.chromedriver']
+        AUTH_CONF = CONFIG['AUTH']['reservation']
+        CHROME_YEYAK_CONF = CONFIG['VAL']['seoul.yeyak']['chrome']
+
+        title, body = None, None
+
+        if command != '/yeyak':  # Only work with '/yeyak' command
+            return title, body
+
+        # Send init message
+        self.set_response(resp_title=f'예약 가능한 시설을 검색합니다. (최대 100회 탐색)')
+        self.send_response()
+
+        # Go to yeyak
+        test = False
+        if 'test' in kwargs and kwargs['test']:
+            test = kwargs['test']
+        options = ChromeOptions()
+        options.add_argument('window-size=1600,1024')
+        # options.add_argument('--headless')
+        # options.add_argument('--disable-gpu')
+        driver = Chrome(executable_path=CHROME_DRIVER_PATH, options=options)
+
+        # Open domain site in browser
+        default_url = CHROME_YEYAK_CONF['url']
+        driver.get(default_url if default_url else 'https://yeyak.seoul.go.kr')
+
+        # Search and Reserve valid facility
+        target, quarter = ('송파구여성', '잠실유수지', '보라매'), (7, 8, 12, 13, 14)  # TODO: Make these to CONFIG variables
+        target_weekend = ('주말', '토, ', ', 일')
+        quarter_start_times = tuple([q*2+4 for q in quarter])  # Translate to time quarter
+
+        # Set to version of Korean
+        driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.lang_tit']).click()
+        driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.lang_kor']).click()
+        time.sleep(2)
+
+        # Login action
+        driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.btn_login']).click()
+        input_userid = driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.input_userid'])
+        input_userid.send_keys(AUTH_CONF['seoul.yeyak.id'])
+        input_password = driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.input_password'])
+        input_password.send_keys(AUTH_CONF['seoul.yeyak.password'])
+        driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.btn_login_submit']).click()
+
+        # Search by target
+        soccer_code, cnt = 'T105', 0
+        while cnt < 100:
+            # Select facility type to soccer
+            time.sleep(1)
+            select_facility_type = driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.select_facility_type'])
+            Select(select_facility_type).select_by_value(soccer_code)
+            time.sleep(2)
+
+            # Search option by target
+            select_elem = driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.select_facilities'])
+            facilities = select_elem.find_elements_by_tag_name('option')
+            options = [
+                (option.get_property('value'), option.text)
+                for option in facilities
+                # Whether the facility-name(option.text) contains target keywords and target weekend keywords
+                if functools.reduce(
+                    lambda x, y: x or y,
+                    [keyword in option.text for keyword in target]
+                ) and functools.reduce(
+                    lambda x, y: x or y,
+                    [weekend_keyword in option.text for weekend_keyword in target_weekend])
+            ]
+            if options:
+                LOGGER.info(f'[YEYAK] searched! > {options}')
+                # Check and Registration!!
+                result = self._register_facility(driver, options, select_elem, quarter_start_times, self.username, test)
+                if result[0] is not None and result[1] is not None:  # if contents existing
+                    if result and isinstance(result, Tuple) and len(result) == 2:  # title, body
+                        title, body = result
+                    LOGGER.info(f'[YEYAK] Done.')
+                    LOGGER.info(f'[YEYAK] TITLE: {result[0]}')
+                    LOGGER.info(f'[YEYAK] BODY: {result[1]}')
+                    break
+
+            # Yield every 10 count
+            if cnt % 10 == 9:
+                cnt += 1
+                self.set_response(resp_title=f'{cnt}회 검색중...')
+                self.send_response()
+                continue
+
+            # Reload page
+            LOGGER.info(f'[YEYAK][{cnt + 1}] no result. refresh page')
+            time.sleep(1)
+            driver.get(default_url if default_url else 'https://yeyak.seoul.go.kr')  # Open home site
+            cnt += 1
+
+        # Logout action
+        driver.find_element_by_xpath(CHROME_YEYAK_CONF['xpath.btn_logout']).click()
+
+        # Close and Quit browser
+        driver.quit()
+
+        # Final message
+        return title, body
+
+    def _register_facility(self, driver, options, select_elem, quarter_start_times, username, test):
+        import time
+        import pytz
+
+        from datetime import datetime, timedelta
+        from selenium.webdriver.support.ui import Select
+
+        # Check daily quarter(time area) matched by each option
+        for option in options:
+            # Select option and Go to reservation page (예약하기(1))
+            option_value, facility_name = option
+            Select(select_elem).select_by_value(option_value)
+            driver.find_element_by_xpath(
+                '/html/body/div/div[3]/div[1]/div[1]/div/div/div[2]/div[1]/button').click()
+
+            # Clear all popup
+            for popup in driver.find_elements_by_class_name('pop_x'):
+                LOGGER.info(f'[YEYAK] Click existing popup')
+                try:
+                    popup.click()
+                except Exception:
+                    LOGGER.error(f'[YEYAK] An error occurred clicking popup button')
+
+            # Go to detailed reservation page (예약하기(2))
+            driver.find_element_by_xpath(
+                '/html/body/div/div[3]/div[2]/div/form[2]/div[1]/div[2]/div/div/a[1]').click()
+
+            # Select specific schedule matched (daily -> timely)
+            for daily_elem in driver.find_elements_by_class_name('tbl_cal .able'):
+                daily_elem_tag_a = daily_elem.find_element_by_tag_name('a')
+
+                # TODO: Move to datetimelib.py
+                KST_TZ = pytz.timezone('Asia/Seoul')
+                curr_datetime_kst = datetime.utcnow().replace(tzinfo=pytz.timezone('UTC')).astimezone(tz=KST_TZ)
+                selected_date_kst = KST_TZ.localize(  # Get selected date as KST
+                    datetime.strptime(daily_elem_tag_a.get_attribute('data-ymd'), '%Y%m%d'))
+
+                selected_weekday = selected_date_kst.weekday()
+                # Check weekends except today
+                if curr_datetime_kst.date() != selected_date_kst.date() and selected_weekday >= 5:
+                    daily_elem_tag_a.click()
+                    for timely_elem in driver.find_elements_by_class_name('tab-all'):
+                        timely_elem_tag_a = timely_elem.find_element_by_tag_name('a')
+                        start_hour = int(timely_elem_tag_a.get_attribute('data-start-hm').split(':')[0])
+                        if selected_weekday == 6:  # Adjust start_hour for sunday
+                            start_hour += 18
+
+                        # Check for quarter time matched
+                        if start_hour in quarter_start_times:
+                            timely_elem_tag_a.click()
+
+                            # Additioanl info
+                            group_name = 'FC Tesla'
+                            register_email_id = 'yyy123789'
+                            register_email_domain = 'naver.com'
+                            register_date = (selected_date_kst + timedelta(
+                                hours=start_hour - 18 if selected_weekday == 6 else start_hour
+                            )).strftime('%Y-%m-%d %H:%M:%S')
+
+                            LOGGER.info(f'[YEYAK] START-HOUR-MATCHED: '
+                                        f'{register_date} -> ({selected_weekday}){start_hour}')
+
+                            driver.find_element_by_class_name('user_plus').click()  # 이용인원
+                            for e in driver.find_elements_by_class_name('book_tit2 label'):  # 신청자 정보와 동일, 전체동의
+                                try:
+                                    e.click()
+                                except Exception:
+                                    LOGGER.error(f'[YEYAK] An error occurred clicking label for, '
+                                                 f'"chk_info", "chk_agree_all"')
+                            try:
+                                driver.find_element_by_xpath(
+                                    '/html/body/div/div[3]/div[2]/div/div[1]/form/div[3]'
+                                    '/div[2]/div[5]/table/tbody/tr[1]/td/span[2]/label'
+                                ).click()  # Select radio label for '단체'
+                            except Exception:
+                                LOGGER.exception(f'There is no radio element for "단체"')
+                            driver.find_element_by_id('grp_nm').send_keys(group_name)  # 단체명
+                            driver.find_element_by_id('form_email1').send_keys(register_email_id)  # 이메일
+                            driver.find_element_by_id('form_email2').send_keys(register_email_domain)
+
+                            # Yeyak for matched target if not in test mode!!
+                            if not test:
+                                driver.find_element_by_xpath(
+                                    '/html/body/div/div[3]/div[2]/div/div[1]/form/div[3]/div[3]/div/div[3]/button'
+                                ).click()
+                                driver.switch_to.alert.accept()  # Pass existing alert
+
+                            time.sleep(3)
+
+                            # Return reservation message
+                            return f'{"[TEST] " if test else ""}예약 완료!', \
+                                   f'- 시설명: {facility_name}\n' \
+                                   f'- 일시: {register_date}\n' \
+                                   f'- 예약자명: {username}\n' \
+                                   f'- 예약 이메일: {register_email_id}@{register_email_domain}'
+        return None, None
+
     def action_by_step(self) -> Union[Dict, List]:
         """Take action and Return send_result."""
         if self.bot_status == 2:  # Status of bot_command
@@ -190,9 +396,9 @@ class ReservationBot(TelegramBot):
                 title = f'하이, {self.username}👋. 예약 봇을 시작합니다.'
                 body = '예약하려면 "/yeyak" 을, 테스트하려면 "/testyeyak" 을 입력하세요.'
             elif command == '/yeyak':  # Reserve at once
-                title, body = self._execute_yeyak(command)
+                title, body = self._execute_onestep(command)
             elif command == '/testyeyak':  # Check possibility
-                title, body = self._execute_yeyak(command='/yeyak', test=True)
+                title, body = self._execute_onestep(command='/yeyak', test=True)
             elif command == '/disconnect':
                 title, body = f'Bye, {self.username}', None
             else:  # Legacy condition
