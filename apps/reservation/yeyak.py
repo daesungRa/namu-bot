@@ -20,31 +20,31 @@ FIREFOX_YEYAK_CONF = CONFIG['VAL']['seoul.yeyak']['firefox']
 
 class YeyakHandler(ChromeDriverHandler):
     def __init__(self):
-        super().__init__(url=FIREFOX_YEYAK_CONF['url'])
+        super().__init__(url=CHROME_YEYAK_CONF['url'])
 
     def login(self, userid: str = None, password: str = None):
         # Go to login page
-        elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_login'])
-        self.click_elem(elem=self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_login']))
+        elem = self.search_by_xpath(CHROME_YEYAK_CONF['xpath.btn_login'])
+        self.click_elem(elem=self.search_by_xpath(CHROME_YEYAK_CONF['xpath.btn_login']))
 
         # Insert id, pwd
-        input_userid = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.input_userid'])
+        input_userid = self.search_by_xpath(CHROME_YEYAK_CONF['xpath.input_userid'])
         self.send_keys_to_elem(
             elem=input_userid,
             key=userid if userid else AUTH_CONF['seoul.yeyak.id']
         )
-        input_password = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.input_password'])
+        input_password = self.search_by_xpath(CHROME_YEYAK_CONF['xpath.input_password'])
         self.send_keys_to_elem(
             elem=input_password,
             key=password if password else AUTH_CONF['seoul.yeyak.password']
         )
 
         # Click submit button
-        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_login_submit']))
+        self.click_elem(self.search_by_xpath(CHROME_YEYAK_CONF['xpath.btn_login_submit']))
 
     def logout(self):
         # Click logout button
-        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.btn_logout']))
+        self.click_elem(self.search_by_xpath(CHROME_YEYAK_CONF['xpath.btn_logout']))
 
     @deprecated
     def search_facility(self, facility_name: str, weektime: str, additional_word: str = None):
@@ -55,11 +55,11 @@ class YeyakHandler(ChromeDriverHandler):
         # Repeat until 100 count
         while cnt < 100:
             # Select facility type to soccer
-            self.action_select(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
+            self.action_select(self.search_by_xpath(CHROME_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
             self.sleep(2)
 
             # Search option by inserted param
-            select_elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facilities'])
+            select_elem = self.search_by_xpath(CHROME_YEYAK_CONF['xpath.select_facilities'])
             options = [
                 (option.get_property('value'), option.text)
                 for option in select_elem.find_elements_by_tag_name('option')
@@ -98,11 +98,11 @@ class YeyakHandler(ChromeDriverHandler):
 
         # Select facility type to soccer
         soccer_code = 'T107'
-        self.action_select(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
+        self.action_select(self.search_by_xpath(CHROME_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
         self.sleep(2)
 
         # Select option by inserted param
-        select_elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facilities'])
+        select_elem = self.search_by_xpath(CHROME_YEYAK_CONF['xpath.select_facilities'])
         options = [
             (option.get_property('value'), option.text)
             for option in select_elem.find_elements_by_tag_name('option')
@@ -153,8 +153,8 @@ class YeyakHandler(ChromeDriverHandler):
         title, body = '검색 결과가 없습니다. 다시 시도해 주세요.', None
 
         # Set to version of Korean
-        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.lang_tit']))
-        self.click_elem(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.lang_kor']))
+        self.click_elem(self.search_by_xpath(CHROME_YEYAK_CONF['xpath.lang_tit']))
+        self.click_elem(self.search_by_xpath(CHROME_YEYAK_CONF['xpath.lang_kor']))
         self.sleep(2)
 
         if not target:
@@ -172,11 +172,11 @@ class YeyakHandler(ChromeDriverHandler):
         soccer_code, cnt = 'T107', 0
         while cnt < 100:
             # Select facility type to soccer
-            self.action_select(self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
+            self.action_select(self.search_by_xpath(CHROME_YEYAK_CONF['xpath.select_facility_type']), soccer_code)
             self.sleep(2)
 
             # Search option by target
-            select_elem = self.search_by_xpath(FIREFOX_YEYAK_CONF['xpath.select_facilities'])
+            select_elem = self.search_by_xpath(CHROME_YEYAK_CONF['xpath.select_facilities'])
             options = [
                 (option.get_property('value'), option.text)
                 for option in self.search_many_by_tag_name('option', select_elem)

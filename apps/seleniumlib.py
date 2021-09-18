@@ -10,7 +10,7 @@ from time import sleep
 
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver import Firefox, FirefoxOptions
+from selenium.webdriver import Firefox, FirefoxOptions, Chrome, ChromeOptions
 from selenium.common.exceptions import WebDriverException, UnexpectedAlertPresentException
 
 from selenium.webdriver.support.ui import Select
@@ -164,7 +164,7 @@ class ChromeDriverHandler(SeleniumHandler):
     def __init__(self, url: str = None):
         """Set and Handling Chrome webdriver."""
         try:
-            options = FirefoxOptions()
+            options = ChromeOptions()
             options.add_argument('window-size=1600,1024')
             # options.add_argument('window-size=1920,1080')
             options.add_argument('--headless')
@@ -174,9 +174,9 @@ class ChromeDriverHandler(SeleniumHandler):
             # options.add_argument('--disable-extensions')
             # options.add_argument("--ignore-certificate-errors")
             # options.add_argument("--disable-popup-blocking")
-            driver = Firefox(executable_path=GECKO_DRIVER_PATH, options=options)
+            driver = Chrome(executable_path=CHROME_DRIVER_PATH, options=options)
         except WebDriverException:
-            raise WebDriverPathError(path=GECKO_DRIVER_PATH)
+            raise WebDriverPathError(path=CHROME_DRIVER_PATH)
 
         super().__init__(driver=driver, driver_not_found_error=ChromeDriverNotFoundError, url=url)
 
