@@ -165,18 +165,18 @@ class ChromeDriverHandler(SeleniumHandler):
         """Set and Handling Chrome webdriver."""
         try:
             options = ChromeOptions()
-            options.add_argument('window-size=1600,1024')
-            # options.add_argument('window-size=1920,1080')
+            # options.add_argument('window-size=1600,1024')
             options.add_argument('--headless')
             options.add_argument('--disable-gpu')
+            options.add_argument('--no-proxy-server')
             # options.add_argument('--no-sandbox')
             # options.add_argument('--disable-dev-shm-usage')
-            # options.add_argument('--disable-extensions')
-            # options.add_argument("--ignore-certificate-errors")
-            # options.add_argument("--disable-popup-blocking")
             driver = Chrome(executable_path=CHROME_DRIVER_PATH, options=options)
-        except WebDriverException:
-            raise WebDriverPathError(path=CHROME_DRIVER_PATH)
+        except WebDriverException as we:
+            raise WebDriverException(
+                msg=f"An error occurred. webdriver path is '{CHROME_DRIVER_PATH}'",
+                stacktrace=we
+            )
 
         super().__init__(driver=driver, driver_not_found_error=ChromeDriverNotFoundError, url=url)
 
