@@ -182,6 +182,7 @@ class ReservationBot(TelegramBot):
         # Final message
         return title, body
 
+    @deprecated
     def _execute_onestep(self, command: str, **kwargs):
         import time
         import functools
@@ -396,9 +397,11 @@ class ReservationBot(TelegramBot):
                 title = f'하이, {self.username}👋. 예약 봇을 시작합니다.'
                 body = '예약하려면 "/yeyak" 을, 테스트하려면 "/testyeyak" 을 입력하세요.'
             elif command == '/yeyak':  # Reserve at once
-                title, body = self._execute_onestep(command)
+                # title, body = self._execute_onestep(command)
+                title, body = self._execute_yeyak(command)
             elif command == '/testyeyak':  # Check possibility
-                title, body = self._execute_onestep(command='/yeyak', test=True)
+                # title, body = self._execute_onestep(command='/yeyak', test=True)
+                title, body = self._execute_yeyak(command='/yeyak', test=True)
             elif command == '/disconnect':
                 title, body = f'Bye, {self.username}', None
             else:  # Legacy condition
